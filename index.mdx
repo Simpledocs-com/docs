@@ -3,7 +3,7 @@ title: "SimpleDocs API"
 description: "Programmatic access to your company's legal workflows"
 ---
 
-The SimpleDocs API lets you integrate legal workflows directly into your systems — upload documents, create requests, track their lifecycle, and receive real-time notifications via webhooks.
+Build powerful integrations with SimpleDocs. Upload documents, automate legal requests, track their lifecycle, and receive real-time notifications — all programmatically.
 
 <Card
   title="Quickstart"
@@ -11,38 +11,54 @@ The SimpleDocs API lets you integrate legal workflows directly into your systems
   href="/quickstart"
   horizontal
 >
-  Make your first API call in 5 minutes.
+  Get authenticated and make your first API call in under 5 minutes.
 </Card>
 
 ## Essentials
 
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="API overview"
-    icon="book"
+    title="API Overview"
+    icon="book-open"
     href="/introduction"
   >
-    Base URL, response format, errors, rate limits, and scopes.
+    Base URL, versioning, response format, error handling, and rate limits.
   </Card>
   <Card
     title="Authentication"
     icon="key"
     href="/authentication"
   >
-    OAuth 2.0 client credentials flow — get a token and start calling endpoints.
+    OAuth 2.0 client credentials — obtain a token and start making requests.
   </Card>
   <Card
     title="Webhooks"
-    icon="webhook"
+    icon="bell"
     href="/webhooks-guide"
   >
-    Subscribe to events like execution_complete and get notified in real time.
+    Subscribe to lifecycle events and receive HTTP callbacks in real time.
   </Card>
   <Card
     title="API Reference"
-    icon="terminal"
+    icon="code"
     href="/api-reference"
   >
-    Full endpoint reference for documents, workflows, requests, and webhooks.
+    Full endpoint documentation for documents, workflows, requests, and webhooks.
   </Card>
-</Columns>
+</CardGroup>
+
+## Capabilities
+
+Use the API to integrate SimpleDocs into your existing systems and automate legal operations at scale.
+
+<CardGroup cols={3}>
+  <Card title="Documents" icon="file-lines">
+    Upload, retrieve, and manage repository documents programmatically.
+  </Card>
+  <Card title="Workflows" icon="diagram-project">
+    List published workflows and inspect their schemas and required fields.
+  </Card>
+  <Card title="Requests" icon="paper-plane">
+    Create legal requests, submit counterparty details, and track execution status.
+  </Card>
+</CardGroup>

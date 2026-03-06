@@ -1,0 +1,37 @@
+/*
+ * SimpleDocs brand overrides for Mintlify
+ * Aligned with the SimpleDocs design system:
+ *   purple-ai (#7978FF), gray-1 (#32303E), gray-5 (#F9F9F9)
+ */
+
+#navbar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#topbar-cta-button {
+  border-radius: 9999px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.card {
+  border-radius: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 2px 12px rgba(121, 120, 255, 0.08);
+}
+
+#sidebar-content a[data-active="true"] {
+  font-weight: 600;
+}
+
+.code-block {
+  border-radius: 10px;
+}
+
+footer {
+  border-top: 1px solid rgba(121, 120, 255, 0.1);
+}
