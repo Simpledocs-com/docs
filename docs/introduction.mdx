@@ -1,0 +1,96 @@
+---
+title: Introduction
+description: "Build integrations with the SimpleDocs API"
+---
+
+The SimpleDocs API gives you programmatic access to your company's legal workflows. Use it to upload documents, create requests, track their progress, and receive real-time webhook notifications — all from your own systems.
+
+## Base URL
+
+All API requests are made to:
+
+```
+https://app.simpledocs.com/api/v1
+```
+
+## Authentication
+
+The API uses **OAuth 2.0 client credentials** for authentication. You'll exchange your `client_id` and `client_secret` for a Bearer token, then include it in every request.
+
+See the [Authentication](/authentication) guide for the full walkthrough.
+
+## Versioning
+
+The API is versioned via the URL path (`/v1`). Breaking changes will be introduced under a new version number. Non-breaking additions (new fields, new endpoints) may be added to the current version without notice.
+
+## Response format
+
+All resource responses use the [JSON:API](https://jsonapi.org/) serialization format:
+
+```json
+{
+  "data": {
+    "id": "0dbhXg",
+    "type": "repository_document",
+    "attributes": {
+      "name": "Employment Agreement.pdf",
+      "created_at": "2026-03-05T14:30:00Z"
+    }
+  }
+}
+```
+
+List endpoints include a `pagination` object alongside `data`:
+
+```json
+{
+  "data": [ ... ],
+  "pagination": {
+    "current_page": 1,
+    "per_page": 25,
+    "total_pages": 3,
+    "total_count": 72
+  }
+}
+```
+
+## Errors
+
+Errors follow the [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details format:
+
+```json
+{
+  "type": "parameter_missing",
+  "status": 400,
+  "title": "Bad Request",
+  "detail": "File or URL is required",
+  "instance": "/api/v1/repository_documents",
+  "request_id": "abc-123"
+}
+```
+
+The `request_id` field is useful when contacting support.
+
+## Rate limits
+
+The API enforces a limit of **600 requests per minute** per IP address. If you exceed this limit you will receive a `429 Too Many Requests` response.
+
+## Scopes
+
+Access tokens can have the following scopes:
+
+| Scope   | Description                                      |
+| ------- | ------------------------------------------------ |
+| `read`  | List and retrieve resources (default).           |
+| `write` | Create resources (documents, requests, webhooks). |
+
+Request the scopes you need when creating a token. See [Authentication](/authentication) for details.
+
+## Resources
+
+| Resource                                                        | Description                                                    |
+| --------------------------------------------------------------- | -------------------------------------------------------------- |
+| [Repository Documents](/api-reference/repository-documents)      | Upload and manage documents in your repository.                |
+| [Workflows](/api-reference/workflows)                            | List your company's workflows and inspect their schemas.       |
+| [Requests](/api-reference/requests)                              | Create legal requests and monitor their lifecycle.             |
+| [Webhooks](/api-reference/webhooks)                              | Subscribe to events like `execution_complete`.                 |

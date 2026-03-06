@@ -1,0 +1,916 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SimpleDocs API",
+    "version": "1.0.0",
+    "description": "The SimpleDocs API lets you programmatically manage repository documents, workflows, requests, and webhooks.\n\nAll endpoints are scoped to the company associated with your OAuth application.\n\n**Rate limiting:** 600 requests per minute per IP address.\n\n**Base URL:** `https://app.simpledocs.com/api`"
+  },
+  "servers": [
+    {
+      "url": "https://app.simpledocs.com/api",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "Obtain access tokens via OAuth2 client credentials" },
+    { "name": "Repository Documents", "description": "Upload and manage documents in your repository" },
+    { "name": "Workflows", "description": "List workflows and retrieve their schemas" },
+    { "name": "Requests", "description": "Create and track legal requests" },
+    { "name": "Webhooks", "description": "Register webhooks to receive event notifications" }
+  ],
+  "paths": {
+    "/oauth/token": {
+      "post": {
+        "operationId": "createToken",
+        "summary": "Create an access token",
+        "description": "Exchange your client credentials for a Bearer access token. Tokens expire after **2 hours**.",
+        "tags": ["Authentication"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["grant_type", "client_id", "client_secret"],
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "enum": ["client_credentials"],
+                    "description": "Must be `client_credentials`."
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "Your OAuth application UID."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "Your OAuth application secret."
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Space-separated list of scopes. Available scopes: `read` (default), `write`.",
+                    "example": "read write"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiJ9..." },
+                    "token_type": { "type": "string", "example": "Bearer" },
+                    "expires_in": { "type": "integer", "example": 7200, "description": "Token lifetime in seconds." },
+                    "scope": { "type": "string", "example": "read write" },
+                    "created_at": { "type": "integer", "example": 1709654400 }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid client credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "invalid_client" },
+                    "error_description": { "type": "string", "example": "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/repository_documents": {
+      "get": {
+        "operationId": "listRepositoryDocuments",
+        "summary": "List repository documents",
+        "description": "Returns a paginated list of repository documents for your company. Results are limited to non-discarded documents.",
+        "tags": ["Repository Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/page" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of repository documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/RepositoryDocument" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "operationId": "createRepositoryDocument",
+        "summary": "Create a repository document",
+        "description": "Upload a document to the repository. You must provide either a `file` (multipart upload) or a `url` to fetch the document from. An optional `metadata` JSON object can be attached.\n\nRequires the `write` scope.",
+        "tags": ["Repository Documents"],
+        "security": [{ "bearerAuth": ["write"] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The document file to upload. Required if `url` is not provided."
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A public HTTP/HTTPS URL to fetch the document from. Required if `file` is not provided. Internal/private addresses are blocked."
+                  },
+                  "metadata": {
+                    "type": "string",
+                    "description": "A JSON string with arbitrary metadata to attach to the document.",
+                    "example": "{\"department\":\"Legal\",\"category\":\"Vendor\"}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Document created successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "description": "The document's hash ID.", "example": "0dbhXg" },
+                        "name": { "type": "string", "example": "Employment Agreement.pdf" },
+                        "created_at": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" }
+        }
+      }
+    },
+    "/v1/repository_documents/{id}": {
+      "get": {
+        "operationId": "getRepositoryDocument",
+        "summary": "Get a repository document",
+        "description": "Retrieve a single repository document by its hash ID.",
+        "tags": ["Repository Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/hashId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The repository document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/RepositoryDocument" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/workflows": {
+      "get": {
+        "operationId": "listWorkflows",
+        "summary": "List workflows",
+        "description": "Returns a paginated list of workflows for your company. Optionally filter by status.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/page" },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by workflow status.",
+            "schema": {
+              "type": "string",
+              "enum": ["published", "unpublished"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of workflows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Workflow" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/workflows/{id}": {
+      "get": {
+        "operationId": "getWorkflow",
+        "summary": "Get a workflow",
+        "description": "Retrieve a single workflow by its hash ID.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/hashId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The workflow.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Workflow" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/workflows/{id}/schema": {
+      "get": {
+        "operationId": "getWorkflowSchema",
+        "summary": "Get a workflow schema",
+        "description": "Returns the schema for a workflow, including required fields, required variables, and variable properties. Use this to understand what parameters are needed when creating a request for this workflow.",
+        "tags": ["Workflows"],
+        "parameters": [
+          { "$ref": "#/components/parameters/hashId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The workflow schema.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkflowSchema" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/requests": {
+      "get": {
+        "operationId": "listRequests",
+        "summary": "List requests",
+        "description": "Returns a paginated list of legal requests for your company. Optionally filter by status.",
+        "tags": ["Requests"],
+        "parameters": [
+          { "$ref": "#/components/parameters/page" },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by request status.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "ready_for_send",
+                "business_review",
+                "initial_review",
+                "ongoing_review",
+                "sent_for_signature",
+                "changes_proposed",
+                "signed",
+                "archived",
+                "declined",
+                "canceled",
+                "expired"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/LegalRequest" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "operationId": "createRequest",
+        "summary": "Create a request",
+        "description": "Create a new legal request for a published workflow. The required fields and variables depend on the workflow — use the [Get workflow schema](/api-reference/workflows/get-workflow-schema) endpoint first to discover them.\n\nSome workflows generate an agreement from a template and require counterparty details, while others accept an uploaded document via the `file` field. The schema endpoint tells you exactly which fields and variables are needed.\n\nRequires the `write` scope.",
+        "tags": ["Requests"],
+        "security": [{ "bearerAuth": ["write"] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["workflow_id"],
+                "properties": {
+                  "workflow_id": {
+                    "type": "string",
+                    "description": "The hash ID of the published workflow to use."
+                  },
+                  "requester_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email of an existing user in your company who is making the request."
+                  },
+                  "counterparty_name": {
+                    "type": "string",
+                    "description": "Name of the counterparty signer. Required by some workflow types — check the workflow schema."
+                  },
+                  "counterparty_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email of the counterparty signer. Required by some workflow types — check the workflow schema."
+                  },
+                  "counterparty_organization_name": {
+                    "type": "string",
+                    "description": "Name of the counterparty's organization. Required by some workflow types — check the workflow schema."
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The document file to use. Required by workflows that accept a third-party document — check the workflow schema."
+                  },
+                  "variables": {
+                    "type": "string",
+                    "description": "A JSON string containing the workflow variable values. Use the workflow schema endpoint to discover required and optional variables.",
+                    "example": "{\"purpose\":\"Evaluating a potential partnership\",\"duration\":2,\"duration_unit\":\"year\"}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/LegalRequest" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" }
+        }
+      }
+    },
+    "/v1/requests/{id}": {
+      "get": {
+        "operationId": "getRequest",
+        "summary": "Get a request",
+        "description": "Retrieve a single legal request by its hash ID.",
+        "tags": ["Requests"],
+        "parameters": [
+          { "$ref": "#/components/parameters/hashId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/LegalRequest" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/requests/{id}/activity": {
+      "get": {
+        "operationId": "getRequestActivity",
+        "summary": "Get request activity",
+        "description": "Returns the activity log for a legal request, including status changes, comments, and other events.",
+        "tags": ["Requests"],
+        "parameters": [
+          { "$ref": "#/components/parameters/hashId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The activity log for the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ActivityLog" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "operationId": "listWebhooks",
+        "summary": "List webhooks",
+        "description": "Returns a paginated list of webhooks registered for your company.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/page" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of webhooks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/PaginatedResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Webhook" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "summary": "Create a webhook",
+        "description": "Register a new webhook endpoint. The webhook will automatically subscribe to the `execution_complete` event.\n\nAuthentication credentials depend on the `auth_type`:\n- `no_auth` — no additional fields required\n- `basic` — requires `username` and `password`\n- `bearer` — requires `token`\n\nRequires the `write` scope.",
+        "tags": ["Webhooks"],
+        "security": [{ "bearerAuth": ["write"] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "url"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "A human-readable name for the webhook.",
+                    "example": "Salesforce Integration"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The HTTPS URL that will receive webhook payloads.",
+                    "example": "https://example.com/webhooks/simpledocs"
+                  },
+                  "auth_type": {
+                    "type": "string",
+                    "enum": ["no_auth", "basic", "bearer"],
+                    "default": "no_auth",
+                    "description": "The authentication method for webhook delivery."
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Username for `basic` authentication."
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Password for `basic` authentication."
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "Bearer token for `bearer` authentication."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Webhook" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Obtain a Bearer token via the [Create access token](/api-reference/authentication/create-token) endpoint using the OAuth2 client credentials flow."
+      }
+    },
+    "parameters": {
+      "hashId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The resource's hash ID.",
+        "schema": { "type": "string", "example": "0dbhXg" }
+      },
+      "page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Page number for pagination (defaults to 1).",
+        "schema": { "type": "integer", "default": 1, "minimum": 1 }
+      }
+    },
+    "schemas": {
+      "RepositoryDocument": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Hash ID of the document.", "example": "0dbhXg" },
+          "type": { "type": "string", "example": "repository_document" },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "Employment Agreement.pdf" },
+              "custom_fields": {
+                "type": "object",
+                "nullable": true,
+                "description": "Arbitrary metadata attached to the document.",
+                "additionalProperties": true
+              },
+              "created_at": { "type": "string", "format": "date-time" },
+              "agreement_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to download the document file."
+              }
+            }
+          },
+          "relationships": {
+            "type": "object",
+            "properties": {
+              "legal_request": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "nullable": true,
+                    "properties": {
+                      "id": { "type": "string" },
+                      "type": { "type": "string", "example": "legal_request" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Workflow": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Hash ID of the workflow.", "example": "k9Xp2m" },
+          "type": { "type": "string", "example": "workflow" },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "Vendor Agreement" },
+              "description": { "type": "string", "nullable": true, "example": "Standard agreement for new vendor onboarding" },
+              "status": { "type": "string", "enum": ["published", "unpublished"], "example": "published" },
+              "type": { "type": "string", "description": "The workflow type identifier." }
+            }
+          }
+        }
+      },
+      "WorkflowSchema": {
+        "type": "object",
+        "description": "Describes the fields and variables required to create a request for this workflow.",
+        "properties": {
+          "name": { "type": "string", "example": "Vendor Agreement" },
+          "description": { "type": "string", "nullable": true },
+          "required_fields": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Top-level fields that must be provided when creating a request.",
+            "example": ["workflow_id", "requester_email", "counterparty_name", "counterparty_email", "counterparty_organization_name"]
+          },
+          "required_variables": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Variable names that must be included in the `variables` JSON.",
+            "example": ["purpose"]
+          },
+          "variables_properties": {
+            "type": "object",
+            "description": "A map of variable names to their type definitions, including whether they are required and any available options.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "required": { "type": "boolean" },
+                "properties": {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string", "enum": ["string", "number", "integer", "boolean", "object", "array"] },
+                    "format": { "type": "string" },
+                    "options": { "type": "array", "items": { "type": "string" } },
+                    "suggestions": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LegalRequest": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Hash ID of the request.", "example": "mN3kYq" },
+          "type": { "type": "string", "example": "legal_request" },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "Vendor Agreement — Acme Corp" },
+              "description": { "type": "string", "nullable": true },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "ready_for_send",
+                  "business_review",
+                  "initial_review",
+                  "ongoing_review",
+                  "sent_for_signature",
+                  "changes_proposed",
+                  "signed",
+                  "archived",
+                  "declined",
+                  "canceled",
+                  "expired"
+                ],
+                "example": "initial_review"
+              }
+            }
+          }
+        }
+      },
+      "ActivityLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "example": "activity_log" },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "action": { "type": "string", "description": "The type of action that occurred.", "example": "status_change" },
+              "description": { "type": "string", "example": "Status changed to initial_review" },
+              "comment": { "type": "string", "nullable": true },
+              "additional_data": { "type": "object", "nullable": true, "additionalProperties": true },
+              "created_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "example": "webhook" },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "example": "Salesforce Integration" },
+              "url": { "type": "string", "format": "uri", "example": "https://example.com/webhooks/simpledocs" },
+              "auth_type": { "type": "string", "enum": ["no_auth", "basic", "bearer"], "example": "bearer" },
+              "events": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of event names this webhook is subscribed to.",
+                "example": ["execution_complete"]
+              }
+            }
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "current_page": { "type": "integer", "example": 1 },
+              "per_page": { "type": "integer", "example": 25 },
+              "total_pages": { "type": "integer", "example": 3 },
+              "total_count": { "type": "integer", "example": 72 }
+            }
+          }
+        }
+      },
+      "RFC9457Error": {
+        "type": "object",
+        "description": "Error responses follow [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details format.",
+        "properties": {
+          "type": { "type": "string", "description": "A machine-readable error type identifier.", "example": "parameter_missing" },
+          "status": { "type": "integer", "example": 400 },
+          "title": { "type": "string", "example": "Bad Request" },
+          "detail": { "type": "string", "description": "A human-readable explanation of the error.", "example": "File or URL is required" },
+          "instance": { "type": "string", "description": "The request path that generated the error.", "example": "/api/v1/repository_documents" },
+          "request_id": { "type": "string", "description": "A unique identifier for the request, useful for support." }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request is malformed or missing required parameters.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RFC9457Error" },
+            "example": {
+              "type": "parameter_missing",
+              "status": 400,
+              "title": "Bad Request",
+              "detail": "File or URL is required",
+              "instance": "/api/v1/repository_documents",
+              "request_id": "abc-123"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "The access token is missing, invalid, or expired.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RFC9457Error" },
+            "example": {
+              "type": "token_expired",
+              "status": 401,
+              "title": "Token Expired",
+              "detail": "The access token has expired.",
+              "instance": "/api/v1/workflows",
+              "request_id": "abc-123"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The access token does not have the required scope.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RFC9457Error" },
+            "example": {
+              "type": "insufficient_scope",
+              "status": 403,
+              "title": "Forbidden",
+              "detail": "The access token does not have the required scope.",
+              "instance": "/api/v1/repository_documents",
+              "request_id": "abc-123"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RFC9457Error" },
+            "example": {
+              "type": "request_not_found",
+              "status": 404,
+              "title": "Request not found",
+              "detail": "The request you are trying to access does not exist.",
+              "instance": "/api/v1/requests/abc123",
+              "request_id": "abc-123"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "The request was well-formed but could not be processed.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RFC9457Error" },
+            "example": {
+              "type": "repository_document_creation_error",
+              "status": 422,
+              "title": "Repository document creation failed",
+              "detail": "File type is not supported",
+              "instance": "/api/v1/repository_documents",
+              "request_id": "abc-123"
+            }
+          }
+        }
+      }
+    }
+  }
+}

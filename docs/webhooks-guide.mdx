@@ -1,0 +1,125 @@
+---
+title: Webhooks
+description: "Receive real-time notifications when events happen in SimpleDocs"
+---
+
+Webhooks let your application receive HTTP callbacks when events occur in SimpleDocs, so you don't need to poll the API for updates.
+
+## How it works
+
+1. You register a webhook endpoint via the API.
+2. When a subscribed event occurs, SimpleDocs sends an HTTP `POST` request to your URL with a JSON payload.
+3. Your server processes the payload and responds with a `2xx` status code to acknowledge receipt.
+
+## Supported events
+
+| Event                 | Description                                                                  |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `execution_complete`  | Fired when a request has been fully executed (all parties have signed).      |
+
+New events may be added in the future. Your webhook handler should gracefully ignore unrecognized event types.
+
+## Creating a webhook
+
+Use the [Create webhook](/api-reference/webhooks/create-webhook) endpoint. You'll need a token with the `write` scope.
+
+### No authentication
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Integration",
+    "url": "https://example.com/webhooks/simpledocs"
+  }'
+```
+
+### Basic authentication
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Integration",
+    "url": "https://example.com/webhooks/simpledocs",
+    "auth_type": "basic",
+    "username": "webhook_user",
+    "password": "secret123"
+  }'
+```
+
+### Bearer token authentication
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Integration",
+    "url": "https://example.com/webhooks/simpledocs",
+    "auth_type": "bearer",
+    "token": "your-webhook-verification-token"
+  }'
+```
+
+## Webhook payloads
+
+When an event fires, SimpleDocs delivers a `POST` request to your URL with a JSON body. The exact payload structure depends on the event type.
+
+### `execution_complete` payload
+
+```json
+{
+  "event": "execution_complete",
+  "data": {
+    "request_id": "mN3kYq",
+    "workflow_id": "k9Xp2m",
+    "status": "signed"
+  }
+}
+```
+
+## Responding to webhooks
+
+Your endpoint must return an HTTP `2xx` status code within **30 seconds** to indicate successful receipt. Any other status code or a timeout is treated as a delivery failure.
+
+## Best practices
+
+- **Use HTTPS** — Always use an `https://` URL for your webhook endpoint to protect payloads in transit.
+- **Respond quickly** — Process webhook payloads asynchronously (e.g., enqueue a background job) and return `200` immediately.
+- **Handle duplicates** — In rare cases a webhook may be delivered more than once. Design your handler to be idempotent.
+- **Ignore unknown events** — As new events are added, your endpoint may receive event types you haven't seen before. Return `200` and ignore them.
+
+## Listing your webhooks
+
+You can verify your registered webhooks at any time:
+
+```bash
+curl https://app.simpledocs.com/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "42",
+      "type": "webhook",
+      "attributes": {
+        "name": "My Integration",
+        "url": "https://example.com/webhooks/simpledocs",
+        "auth_type": "bearer",
+        "events": ["execution_complete"]
+      }
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "per_page": 25,
+    "total_pages": 1,
+    "total_count": 1
+  }
+}
+```

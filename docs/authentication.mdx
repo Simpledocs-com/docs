@@ -1,0 +1,90 @@
+---
+title: Authentication
+description: "Obtain and use API access tokens"
+---
+
+The SimpleDocs API uses **OAuth 2.0 with the client credentials grant**. This means your server exchanges a `client_id` and `client_secret` for a short-lived Bearer token, then sends that token with every API request.
+
+## Prerequisites
+
+You'll need an OAuth application linked to your company. Your SimpleDocs administrator can create one from the admin panel or by contacting the SimpleDocs team. You will receive:
+
+- **Client ID** — your application's public identifier
+- **Client Secret** — a secret key (keep this safe, never expose it client-side)
+
+## Step 1: Request an access token
+
+Make a `POST` request to the token endpoint:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/oauth/token \
+  -d "grant_type=client_credentials" \
+  -d "client_id=YOUR_CLIENT_ID" \
+  -d "client_secret=YOUR_CLIENT_SECRET" \
+  -d "scope=read write"
+```
+
+A successful response looks like:
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiJ9...",
+  "token_type": "Bearer",
+  "expires_in": 7200,
+  "scope": "read write",
+  "created_at": 1709654400
+}
+```
+
+| Field          | Description                          |
+| -------------- | ------------------------------------ |
+| `access_token` | The Bearer token to use in requests. |
+| `expires_in`   | Token lifetime in seconds (2 hours). |
+| `scope`        | The granted scopes.                  |
+
+### Scopes
+
+| Scope   | Grants access to                                  |
+| ------- | ------------------------------------------------- |
+| `read`  | All `GET` endpoints (default if omitted).         |
+| `write` | Create endpoints (`POST`) for documents, requests, and webhooks. |
+
+If you only need read access, you can omit the `scope` parameter entirely.
+
+## Step 2: Use the token
+
+Include the token in the `Authorization` header of every API request:
+
+```bash
+curl https://app.simpledocs.com/api/v1/workflows \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Token expiry and renewal
+
+Tokens expire after **2 hours** (7200 seconds). When a token expires, the API returns:
+
+```json
+{
+  "type": "token_expired",
+  "status": 401,
+  "title": "Token Expired",
+  "detail": "The access token has expired."
+}
+```
+
+To continue making requests, request a new token using the same client credentials. There is no refresh token flow — simply repeat Step 1.
+
+### Best practices
+
+- **Cache tokens** until they are close to expiring, rather than requesting a new token for every API call.
+- **Store credentials securely** — never embed your client secret in client-side code, mobile apps, or public repositories.
+- **Request only the scopes you need** — if your integration only reads data, omit the `write` scope.
+
+## Error responses
+
+| Status | Type                  | Meaning                                                      |
+| ------ | --------------------- | ------------------------------------------------------------ |
+| 401    | `token_expired`       | The token has expired. Request a new one.                    |
+| 401    | `invalid_client`      | The client ID or secret is incorrect.                        |
+| 403    | `insufficient_scope`  | The token doesn't have the required scope for this endpoint. |
