@@ -54,7 +54,7 @@
                   },
                   "scope": {
                     "type": "string",
-                    "description": "Space-separated list of scopes. Available scopes: `read` (default), `write`.",
+                    "description": "Space-separated list of scopes. Available: `read`, `write`, `read write`. Can be omitted if you only need read access and your OAuth application is scoped to `read` or `write` — defaults to `read`. Required when scoped to `read write`.",
                     "example": "read write"
                   }
                 }
@@ -387,7 +387,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["workflow_id"],
+                "required": ["workflow_id", "requester_email"],
                 "properties": {
                   "workflow_id": {
                     "type": "string",
@@ -417,9 +417,9 @@
                     "description": "The document file to use. Required by workflows that accept a third-party document — check the workflow schema."
                   },
                   "variables": {
-                    "type": "string",
-                    "description": "A JSON string containing the workflow variable values. Use the workflow schema endpoint to discover required and optional variables.",
-                    "example": "{\"purpose\":\"Evaluating a potential partnership\",\"duration\":2,\"duration_unit\":\"year\"}"
+                    "type": "object",
+                    "description": "A JSON object containing the workflow variable values. Use the workflow schema endpoint to discover required and optional variables.",
+                    "example": {"purpose": "To agree on confidential", "duration_unit": "year", "duration": 2}
                   }
                 }
               }

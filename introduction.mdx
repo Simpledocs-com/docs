@@ -79,12 +79,13 @@ The API enforces a limit of **600 requests per minute** per IP address. If you e
 
 Access tokens can have the following scopes:
 
-| Scope   | Description                                      |
-| ------- | ------------------------------------------------ |
-| `read`  | List and retrieve resources (default).           |
-| `write` | Create resources (documents, requests, webhooks). |
+| Scope        | Description                                       |
+| ------------ | ------------------------------------------------- |
+| `read`       | List and retrieve resources.                      |
+| `write`      | Create resources (documents, requests, webhooks). |
+| `read write` | Both read and write access.                       |
 
-Request the scopes you need when creating a token. See [Authentication](/authentication) for details.
+You can omit `scope` if you only need read access and your OAuth application is scoped to `read` or `write` — it defaults to `read`. If your application has the `read write` scope, you must specify `scope` explicitly. See [Authentication](/authentication) for details.
 
 ## Resources
 

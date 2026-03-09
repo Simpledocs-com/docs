@@ -1,0 +1,133 @@
+---
+title: Requests
+description: "Create legal requests and track their lifecycle"
+---
+
+A request is a legal document process initiated against a workflow. Once created, it moves through a series of statuses as it is reviewed, signed, and completed.
+
+## Before you start
+
+You will need:
+- A published workflow ID — see the [Workflows](/workflows-guide) guide
+- The workflow schema — to know which fields and variables are required
+- A token with the `write` scope
+
+## Creating a request
+
+Use the [Create request](/api-reference/requests/create-request) endpoint. The required fields depend on the workflow schema.
+
+### Example: Generated document workflow
+
+For a workflow that generates an agreement from a template (e.g. an NDA), you need to provide counterparty details and workflow variables:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/requests \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "workflow_id=k9Xp2m" \
+  -F "requester_email=alice@yourcompany.com" \
+  -F "counterparty_name=Bob Smith" \
+  -F "counterparty_email=bob@acme.com" \
+  -F "counterparty_organization_name=Acme Corp" \
+  -F 'variables={"purpose": "To agree on confidential", "duration_unit": "year", "duration": 2}'
+```
+
+### Example: Third-party document workflow
+
+For a workflow that accepts an uploaded document, provide the file instead of counterparty details:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/requests \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "workflow_id=rT7vWx" \
+  -F "requester_email=alice@yourcompany.com" \
+  -F "file=@/path/to/contract.pdf"
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "id": "mN3kYq",
+    "type": "legal_request",
+    "attributes": {
+      "name": "NDA — Mutual — Acme Corp",
+      "status": "draft"
+    }
+  }
+}
+```
+
+<Note>
+`requester_email` is required. It must match an existing user in your company.
+</Note>
+
+## Request statuses
+
+Requests move through the following statuses:
+
+| Status               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| `draft`              | Request created, not yet submitted.                       |
+| `ready_for_send`     | Ready to be sent to the counterparty.                     |
+| `business_review`    | Under internal business review.                           |
+| `initial_review`     | Under legal review.                                       |
+| `ongoing_review`     | Under business review.                                    |
+| `sent_for_signature` | Sent to counterparty for signature.                       |
+| `changes_proposed`   | Counterparty has proposed changes.                        |
+| `signed`             | All parties have signed.                                  |
+| `archived`           | Request has completed its cycle. The signed document is available in [Repository Documents](/api-reference/repository-documents/list-repository-documents). |
+| `declined`           | Counterparty declined.                                    |
+| `canceled`           | Request was canceled.                                     |
+| `expired`            | Request expired before completion.                        |
+
+## Listing requests
+
+```bash
+curl https://app.simpledocs.com/api/v1/requests \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+Filter by status to find active requests:
+
+```bash
+curl "https://app.simpledocs.com/api/v1/requests?status=sent_for_signature" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Getting a request
+
+Retrieve a single request by its ID:
+
+```bash
+curl https://app.simpledocs.com/api/v1/requests/mN3kYq \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Tracking activity
+
+The activity log records every status change, comment, and action on a request:
+
+```bash
+curl https://app.simpledocs.com/api/v1/requests/mN3kYq/activity \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "type": "activity_log",
+      "attributes": {
+        "action": "status_change",
+        "description": "Status changed to initial_review",
+        "comment": null,
+        "created_at": "2026-03-05T15:00:00Z"
+      }
+    }
+  ]
+}
+```
+
+To receive real-time notifications when a request is fully executed, set up a [webhook](/webhooks-guide).

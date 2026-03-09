@@ -109,6 +109,7 @@
     ]
   },
   "api": {
+    "openapi": "openapi.json",
     "playground": {
       "display": "interactive"
     },
@@ -127,13 +128,50 @@
           },
           {
             "group": "Guides",
-            "pages": ["webhooks-guide"]
+            "pages": ["repository-documents-guide", "workflows-guide", "requests-guide", "webhooks-guide"]
           }
         ]
       },
       {
         "tab": "API Reference",
-        "openapi": "openapi.json"
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": ["api-reference/authentication/create-token"]
+          },
+          {
+            "group": "Repository Documents",
+            "pages": [
+              "api-reference/repository-documents/list-repository-documents",
+              "api-reference/repository-documents/get-repository-document",
+              "api-reference/repository-documents/create-repository-document"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "api-reference/workflows/list-workflows",
+              "api-reference/workflows/get-workflow",
+              "api-reference/workflows/get-workflow-schema"
+            ]
+          },
+          {
+            "group": "Requests",
+            "pages": [
+              "api-reference/requests/list-requests",
+              "api-reference/requests/get-request",
+              "api-reference/requests/get-request-activity",
+              "api-reference/requests/create-request"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/list-webhooks",
+              "api-reference/webhooks/create-webhook"
+            ]
+          }
+        ]
       }
     ]
   }

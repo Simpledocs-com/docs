@@ -1,0 +1,97 @@
+---
+title: Repository Documents
+description: "Upload and manage documents in your company's repository"
+---
+
+The repository stores documents that can be referenced or used within your legal workflows. You can upload documents via file or URL.
+
+## Uploading a document
+
+Use the [Create repository document](/api-reference/repository-documents/create-repository-document) endpoint. You need a token with the `write` scope.
+
+### Upload a file
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/repository_documents \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/employment-agreement.pdf"
+```
+
+### Upload from a URL
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/repository_documents \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "url=https://example.com/documents/agreement.pdf"
+```
+
+You must provide either `file` or `url` — not both.
+
+### Attaching metadata
+
+You can attach arbitrary metadata to a document using the `metadata` field:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/repository_documents \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/contract.pdf" \
+  -F 'metadata={"department":"Legal","category":"Vendor"}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Document created successfully",
+  "data": {
+    "id": "0dbhXg",
+    "name": "employment-agreement.pdf",
+    "created_at": "2026-03-05T14:30:00Z"
+  }
+}
+```
+
+## Listing documents
+
+```bash
+curl https://app.simpledocs.com/api/v1/repository_documents \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "0dbhXg",
+      "type": "repository_document",
+      "attributes": {
+        "name": "Employment Agreement.pdf",
+        "custom_fields": { "department": "Legal" },
+        "created_at": "2026-03-05T14:30:00Z",
+        "agreement_url": "https://app.simpledocs.com/documents/0dbhXg/download"
+      },
+      "relationships": {
+        "legal_request": {
+          "data": null
+        }
+      }
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "per_page": 25,
+    "total_pages": 1,
+    "total_count": 1
+  }
+}
+```
+
+## Getting a document
+
+Retrieve a single document by its hash ID:
+
+```bash
+curl https://app.simpledocs.com/api/v1/repository_documents/0dbhXg \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
