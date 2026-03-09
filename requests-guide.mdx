@@ -33,13 +33,16 @@ curl -X POST https://app.simpledocs.com/api/v1/requests \
 
 ### Example: Third-party document workflow
 
-For a workflow that accepts an uploaded document, provide the file instead of counterparty details:
+For a workflow that accepts an uploaded document, provide the file along with counterparty details:
 
 ```bash
 curl -X POST https://app.simpledocs.com/api/v1/requests \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "workflow_id=rT7vWx" \
   -F "requester_email=alice@yourcompany.com" \
+  -F "counterparty_signer_name=Bob Smith" \
+  -F "counterparty_signer_email=bob@acme.com" \
+  -F "counterparty_name=Acme Corp" \
   -F "file=@/path/to/contract.pdf"
 ```
 
