@@ -1,0 +1,110 @@
+---
+title: Workflows
+description: "Discover and inspect workflows to create legal requests"
+---
+
+Workflows define the structure of a legal process — who signs, what variables are required, and what document is used. Before creating a request, you need to find a published workflow and understand what it expects.
+
+## Listing workflows
+
+Use the [List workflows](/api-reference/workflows/list-workflows) endpoint to retrieve all workflows for your company:
+
+```bash
+curl https://app.simpledocs.com/api/v1/workflows \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "k9Xp2m",
+      "type": "workflow",
+      "attributes": {
+        "name": "NDA — Mutual",
+        "description": "Mutual non-disclosure agreement for partnerships",
+        "status": "published",
+        "type": "generated"
+      }
+    },
+    {
+      "id": "rT7vWx",
+      "type": "workflow",
+      "attributes": {
+        "name": "Vendor Agreement",
+        "description": "Standard agreement for new vendor onboarding",
+        "status": "published",
+        "type": "generated"
+      }
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "per_page": 25,
+    "total_pages": 1,
+    "total_count": 2
+  }
+}
+```
+
+You can filter to only published workflows by adding `?status=published`:
+
+```bash
+curl "https://app.simpledocs.com/api/v1/workflows?status=published" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Getting a workflow's schema
+
+Before creating a request, fetch the workflow schema to discover exactly which fields and variables are required. Use the [Get workflow schema](/api-reference/workflows/get-workflow-schema) endpoint:
+
+```bash
+curl https://app.simpledocs.com/api/v1/workflows/k9Xp2m/schema \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```json
+{
+  "name": "NDA — Mutual",
+  "description": "Mutual non-disclosure agreement for partnerships",
+  "required_fields": [
+    "workflow_id",
+    "requester_email",
+    "counterparty_name",
+    "counterparty_email",
+    "counterparty_organization_name"
+  ],
+  "required_variables": ["purpose"],
+  "variables_properties": {
+    "purpose": {
+      "required": true,
+      "properties": {
+        "type": "string"
+      }
+    },
+    "duration": {
+      "required": false,
+      "properties": {
+        "type": "integer"
+      }
+    },
+    "duration_unit": {
+      "required": false,
+      "properties": {
+        "type": "string",
+        "options": ["month", "year"]
+      }
+    }
+  }
+}
+```
+
+### Reading the schema
+
+| Field                 | Description                                                                 |
+| --------------------- | --------------------------------------------------------------------------- |
+| `required_fields`     | Top-level fields you must include when calling Create request.              |
+| `required_variables`  | Keys that must appear inside the `variables` object.                        |
+| `variables_properties`| Type information and available options for each variable.                   |
+
+Use this schema to build the correct Create request payload. See the [Requests](/requests-guide) guide for a full example.

@@ -44,12 +44,13 @@ A successful response looks like:
 
 ### Scopes
 
-| Scope   | Grants access to                                  |
-| ------- | ------------------------------------------------- |
-| `read`  | All `GET` endpoints (default if omitted).         |
-| `write` | Create endpoints (`POST`) for documents, requests, and webhooks. |
+| Scope        | Grants access to                                                  |
+| ------------ | ----------------------------------------------------------------- |
+| `read`       | All `GET` endpoints.                                              |
+| `write`      | Create endpoints (`POST`) for documents, requests, and webhooks.  |
+| `read write` | Both read and write access.                                       |
 
-If you only need read access, you can omit the `scope` parameter entirely.
+You can omit `scope` if you only need read access and your OAuth application is scoped to `read` or `write` — it defaults to `read`. If your application has the `read write` scope, you must specify `scope` explicitly.
 
 ## Step 2: Use the token
 
