@@ -111,7 +111,7 @@
   "api": {
     "openapi": "openapi.json",
     "playground": {
-      "display": "interactive"
+      "display": "none"
     },
     "examples": {
       "languages": ["bash", "python", "javascript"]
