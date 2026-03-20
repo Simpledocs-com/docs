@@ -73,7 +73,12 @@ The `request_id` field is useful when contacting support.
 
 ## Rate limits
 
-The API enforces a limit of **600 requests per minute** per IP address. If you exceed this limit you will receive a `429 Too Many Requests` response.
+| Endpoint                | Limit                        |
+| ----------------------- | ---------------------------- |
+| `POST /api/oauth/token` | 10 requests / minute per IP  |
+| All other `/api/v1/*`   | 600 requests / minute per IP |
+
+Exceeding either limit returns a `429 Too Many Requests` response.
 
 ## Scopes
 
