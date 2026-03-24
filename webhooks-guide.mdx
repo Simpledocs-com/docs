@@ -23,6 +23,10 @@ New events may be added in the future. Your webhook handler should gracefully ig
 
 Use the [Create webhook](/api-reference/webhooks/create-webhook) endpoint. You'll need a token with the `write` scope.
 
+<Warning>
+Webhook URLs **must** use HTTPS. HTTP URLs will be rejected.
+</Warning>
+
 ### No authentication
 
 ```bash
@@ -73,13 +77,44 @@ When an event fires, SimpleDocs delivers a `POST` request to your URL with a JSO
 ```json
 {
   "event": "execution_complete",
-  "data": {
-    "request_id": "mN3kYq",
-    "workflow_id": "k9Xp2m",
-    "status": "signed"
-  }
+  "legal_request": {
+    "id": 42,
+    "name": "Vendor Agreement — Acme Corp",
+    "status": "signed",
+    "description": null,
+    "created_at": "2026-03-05T14:30:00Z",
+    "updated_at": "2026-03-05T16:00:00Z"
+  },
+  "requester": {
+    "id": 7,
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "email": "jane@yourcompany.com",
+    "title": "Legal Ops"
+  },
+  "counterparty": {
+    "id": 12,
+    "name": "John Smith",
+    "email": "john@acme.com",
+    "title": "General Counsel",
+    "organization_name": "Acme Corp"
+  },
+  "workflow": {
+    "id": 3,
+    "name": "Vendor Agreement",
+    "status": "published",
+    "nda_type": "one_nda",
+    "created_at": "2026-01-10T09:00:00Z",
+    "updated_at": "2026-02-20T11:00:00Z"
+  },
+  "questions": [
+    { "Scope of work": "Cloud infrastructure services" },
+    { "Duration": 2 }
+  ]
 }
 ```
+
+The `questions` key is only present for NDA-type workflows.
 
 ## Responding to webhooks
 
@@ -87,7 +122,6 @@ Your endpoint must return an HTTP `2xx` status code within **30 seconds** to ind
 
 ## Best practices
 
-- **Use HTTPS** — Always use an `https://` URL for your webhook endpoint to protect payloads in transit.
 - **Respond quickly** — Process webhook payloads asynchronously (e.g., enqueue a background job) and return `200` immediately.
 - **Handle duplicates** — In rare cases a webhook may be delivered more than once. Design your handler to be idempotent.
 - **Ignore unknown events** — As new events are added, your endpoint may receive event types you haven't seen before. Return `200` and ignore them.

@@ -152,7 +152,7 @@
                   "url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "A public HTTP/HTTPS URL to fetch the document from. Required if `file` is not provided. Internal/private addresses are blocked."
+                    "description": "A public HTTPS URL to fetch the document from. Required if `file` is not provided. Internal and private network addresses are blocked."
                   },
                   "metadata": {
                     "type": "string",
@@ -848,17 +848,44 @@
         }
       },
       "Unauthorized": {
-        "description": "The access token is missing, invalid, or expired.",
+        "description": "The access token is missing, invalid, expired, or revoked.",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/RFC9457Error" },
-            "example": {
-              "type": "token_expired",
-              "status": 401,
-              "title": "Token Expired",
-              "detail": "The access token has expired.",
-              "instance": "/api/v1/workflows",
-              "request_id": "abc-123"
+            "examples": {
+              "expired": {
+                "summary": "Token expired",
+                "value": {
+                  "type": "token_expired",
+                  "status": 401,
+                  "title": "Token Expired",
+                  "detail": "The access token has expired.",
+                  "instance": "/api/v1/workflows",
+                  "request_id": "abc-123"
+                }
+              },
+              "revoked": {
+                "summary": "Token revoked",
+                "value": {
+                  "type": "token_revoked",
+                  "status": 401,
+                  "title": "Token Revoked",
+                  "detail": "The access token has been revoked.",
+                  "instance": "/api/v1/workflows",
+                  "request_id": "abc-123"
+                }
+              },
+              "invalid": {
+                "summary": "Invalid token",
+                "value": {
+                  "type": "invalid_token",
+                  "status": 401,
+                  "title": "Invalid Token",
+                  "detail": "The access token is invalid.",
+                  "instance": "/api/v1/workflows",
+                  "request_id": "abc-123"
+                }
+              }
             }
           }
         }

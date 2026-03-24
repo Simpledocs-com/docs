@@ -14,6 +14,10 @@ You'll need an OAuth application linked to your company. Your SimpleDocs adminis
 
 ## Step 1: Request an access token
 
+<Info>
+The token endpoint is rate-limited to **10 requests per minute** per IP address — stricter than the general API limit. Cache your tokens rather than requesting a new one for every call.
+</Info>
+
 Make a `POST` request to the token endpoint:
 
 ```bash
@@ -76,6 +80,19 @@ Tokens expire after **2 hours** (7200 seconds). When a token expires, the API re
 
 To continue making requests, request a new token using the same client credentials. There is no refresh token flow — simply repeat Step 1.
 
+### Token revocation
+
+Each time you request a new token, the **previous token for the same application is automatically revoked**. Only one active token per OAuth application is allowed at any time.
+
+You can also explicitly revoke a token:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/oauth/revoke \
+  -d "token=YOUR_ACCESS_TOKEN" \
+  -d "client_id=YOUR_CLIENT_ID" \
+  -d "client_secret=YOUR_CLIENT_SECRET"
+```
+
 ### Best practices
 
 - **Cache tokens** until they are close to expiring, rather than requesting a new token for every API call.
@@ -87,5 +104,7 @@ To continue making requests, request a new token using the same client credentia
 | Status | Type                  | Meaning                                                      |
 | ------ | --------------------- | ------------------------------------------------------------ |
 | 401    | `token_expired`       | The token has expired. Request a new one.                    |
+| 401    | `token_revoked`       | The token was revoked (a newer token was issued or it was explicitly revoked). |
+| 401    | `invalid_token`       | The token is not recognized.                                 |
 | 401    | `invalid_client`      | The client ID or secret is incorrect.                        |
 | 403    | `insufficient_scope`  | The token doesn't have the required scope for this endpoint. |
