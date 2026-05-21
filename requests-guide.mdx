@@ -65,6 +65,33 @@ curl -X POST https://app.simpledocs.com/api/v1/requests \
 `requester_email` is required. It must match an existing user in your company.
 </Note>
 
+## Creating a Request with Support Documents
+
+Check the `optional_fields` array in the workflow schema response before submitting — it lists what the workflow accepts. `support_documents[]` is always available. Some optional fields, such as `merge_documents_into_pdf`, only appear when enabled for your account — contact support to request access.
+
+- `support_documents[]` accepts one or more file uploads.
+- `merge_documents_into_pdf` must be `"true"` to enable merging supporting documents into the main document; any other value (including omitting the field) is treated as false.
+
+```bash
+curl -k -X POST https://localhost:3000/api/v1/requests \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "workflow_id=DNxIQK" \
+  -F "requester_email=alice@yourcompany.com" \
+  -F "counterparty_name=Bob Smith" \
+  -F "counterparty_email=bob@acme.com" \
+  -F "counterparty_organization_name=Acme Corp" \
+  -F 'variables={"purpose": "To agree on confidential terms", "duration_unit": "year", "duration": 2}' \
+  -F "support_documents[]=@@/path/to/file.pdf" \
+  -F "merge_documents_into_pdf=true"
+```
+
+To attach multiple support documents, repeat the `support_documents[]` flag:
+
+```bash
+  -F "support_documents[]=@/path/to/first.pdf" \
+  -F "support_documents[]=@/path/to/second.pdf"
+```
+
 ## Request statuses
 
 Requests move through the following statuses:

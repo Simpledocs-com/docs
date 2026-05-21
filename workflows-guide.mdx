@@ -74,6 +74,10 @@ curl https://app.simpledocs.com/api/v1/workflows/k9Xp2m/schema \
     "counterparty_email",
     "counterparty_organization_name"
   ],
+  "optional_fields": [
+    "support_documents[]",
+    "merge_documents_into_pdf"
+  ],
   "required_variables": ["purpose"],
   "variables_properties": {
     "purpose": {
@@ -104,6 +108,7 @@ curl https://app.simpledocs.com/api/v1/workflows/k9Xp2m/schema \
 | Field                 | Description                                                                 |
 | --------------------- | --------------------------------------------------------------------------- |
 | `required_fields`     | Top-level fields you must include when calling Create request.              |
+| `optional_fields`     | Optional top-level fields the workflow accepts.                             |
 | `required_variables`  | Keys that must appear inside the `variables` object.                        |
 | `variables_properties`| Type information and available options for each variable.                   |
 
