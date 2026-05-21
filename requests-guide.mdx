@@ -67,10 +67,22 @@ curl -X POST https://app.simpledocs.com/api/v1/requests \
 
 ## Creating a Request with Support Documents
 
-Check the `optional_fields` array in the workflow schema response before submitting — it lists what the workflow accepts. `support_documents[]` is always available. Some optional fields, such as `merge_documents_into_pdf`, only appear when enabled for your account — contact support to request access.
+Check the `optional_fields` array in the workflow schema response before submitting — it lists what the workflow accepts.
 
-- `support_documents[]` accepts one or more file uploads.
-- `merge_documents_into_pdf` must be `"true"` to enable merging supporting documents into the main document; any other value (including omitting the field) is treated as false.
+Supporting documents are additional files attached to a request alongside the main legal document. You can attach files in any format (PDF, Word, images, spreadsheets, etc.), up to **200 MB per file**.
+
+### Merging supporting documents
+
+When merging is enabled, supporting documents are appended to the main legal request document and delivered as a single combined PDF to all parties. This is useful when you want annexes, exhibits, or reference materials to be part of the signed record.
+
+Only **PDF** and **Word** (`.docx`) files can be merged. Files in other formats can still be attached as supporting documents but will not be included in the merge.
+
+<Note>
+`merge_documents_into_pdf` only appears in `optional_fields` when the feature is enabled for your account. Contact [support](mailto:support@simpledocs.com) to request access.
+</Note>
+
+- `support_documents[]` accepts one or more file uploads (any format, max 200 MB each).
+- `merge_documents_into_pdf` must be `"true"` to merge supporting PDF and Word documents into the main document; any other value (including omitting the field) is treated as false.
 
 ```bash
 curl -k -X POST https://localhost:3000/api/v1/requests \
