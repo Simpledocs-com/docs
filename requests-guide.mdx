@@ -69,7 +69,7 @@ curl -X POST https://app.simpledocs.com/api/v1/requests \
 
 Check the `optional_fields` array in the workflow schema response before submitting — it lists what the workflow accepts.
 
-Supporting documents are additional files attached to a request alongside the main legal document. You can attach files in any format (PDF, Word, images, spreadsheets, etc.), up to **200 MB per file**.
+Supporting documents are additional files attached to a request alongside the main legal document. You can attach files in any format (PDF, Word, images, spreadsheets, etc.), up to **100 MB per file**.
 
 ### Merging supporting documents
 
@@ -81,7 +81,7 @@ Only **PDF** and **Word** (`.docx`) files can be merged. Files in other formats 
 `merge_documents_into_pdf` only appears in `optional_fields` when the feature is enabled for your account. Contact [support](mailto:support@simpledocs.com) to request access.
 </Note>
 
-- `support_documents[]` accepts one or more file uploads (any format, max 200 MB each).
+- `support_documents[]` accepts one or more file uploads (any format, max 100 MB each).
 - `merge_documents_into_pdf` must be `"true"` to merge supporting PDF and Word documents into the main document; any other value (including omitting the field) is treated as false.
 
 ```bash
