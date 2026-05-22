@@ -65,6 +65,45 @@ curl -X POST https://app.simpledocs.com/api/v1/requests \
 `requester_email` is required. It must match an existing user in your company.
 </Note>
 
+## Creating a Request with Support Documents
+
+Check the `optional_fields` array in the workflow schema response before submitting — it lists what the workflow accepts.
+
+Supporting documents are additional files attached to a request alongside the main legal document. You can attach files in any format (PDF, Word, images, spreadsheets, etc.), up to **100 MB per file**.
+
+### Merging supporting documents
+
+When merging is enabled, supporting documents are appended to the main legal request document and delivered as a single combined PDF to all parties. This is useful when you want annexes, exhibits, or reference materials to be part of the signed record.
+
+Only **PDF** and **Word** (`.docx`) files can be merged. Files in other formats can still be attached as supporting documents but will not be included in the merge.
+
+<Note>
+`merge_documents_into_pdf` only appears in `optional_fields` when the feature is enabled for your account. Contact [support](mailto:support@simpledocs.com) to request access.
+</Note>
+
+- `support_documents[]` accepts one or more file uploads (any format, max 100 MB each).
+- `merge_documents_into_pdf` must be `"true"` to merge supporting PDF and Word documents into the main document; any other value (including omitting the field) is treated as false.
+
+```bash
+curl -k -X POST https://localhost:3000/api/v1/requests \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "workflow_id=DNxIQK" \
+  -F "requester_email=alice@yourcompany.com" \
+  -F "counterparty_name=Bob Smith" \
+  -F "counterparty_email=bob@acme.com" \
+  -F "counterparty_organization_name=Acme Corp" \
+  -F 'variables={"purpose": "To agree on confidential terms", "duration_unit": "year", "duration": 2}' \
+  -F "support_documents[]=@@/path/to/file.pdf" \
+  -F "merge_documents_into_pdf=true"
+```
+
+To attach multiple support documents, repeat the `support_documents[]` flag:
+
+```bash
+  -F "support_documents[]=@/path/to/first.pdf" \
+  -F "support_documents[]=@/path/to/second.pdf"
+```
+
 ## Request statuses
 
 Requests move through the following statuses:
