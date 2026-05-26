@@ -76,9 +76,47 @@ curl https://app.simpledocs.com/api/v1/workflows/k9Xp2m/schema \
   ],
   "optional_fields": [
     "support_documents[]",
+    "internal_signer_email",
     "merge_documents_into_pdf"
   ],
   "required_variables": ["purpose"],
+  "fields_properties": {
+    "workflow_id": {
+      "required": true,
+      "properties": { "type": "string" }
+    },
+    "requester_email": {
+      "required": true,
+      "properties": { "type": "string" }
+    },
+    "counterparty_name": {
+      "required": true,
+      "properties": { "type": "string" }
+    },
+    "counterparty_email": {
+      "required": true,
+      "properties": { "type": "string" }
+    },
+    "counterparty_organization_name": {
+      "required": true,
+      "properties": { "type": "string" }
+    },
+    "support_documents[]": {
+      "required": false,
+      "properties": { "type": "file" }
+    },
+    "internal_signer_email": {
+      "required": false,
+      "properties": {
+        "type": "string",
+        "options": ["alice@yourcompany.com", "carol@yourcompany.com"]
+      }
+    },
+    "merge_documents_into_pdf": {
+      "required": false,
+      "properties": { "type": "boolean" }
+    }
+  },
   "variables_properties": {
     "purpose": {
       "required": true,
@@ -110,6 +148,7 @@ curl https://app.simpledocs.com/api/v1/workflows/k9Xp2m/schema \
 | `required_fields`     | Top-level fields you must include when calling Create request.              |
 | `optional_fields`     | Optional top-level fields the workflow accepts.                             |
 | `required_variables`  | Keys that must appear inside the `variables` object.                        |
+| `fields_properties`   | Type information for each top-level field.                                  |
 | `variables_properties`| Type information and available options for each variable.                   |
 
 Use this schema to build the correct Create request payload. See the [Requests](/requests-guide) guide for a full example.

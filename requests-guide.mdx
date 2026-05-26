@@ -104,6 +104,26 @@ To attach multiple support documents, repeat the `support_documents[]` flag:
   -F "support_documents[]=@/path/to/second.pdf"
 ```
 
+## Selecting an internal signer
+
+When a workflow has multiple internal signers, you can specify which one should sign a request by passing `internal_signer_email` at creation time:
+
+```bash
+curl -X POST https://app.simpledocs.com/api/v1/requests \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "workflow_id=k9Xp2m" \
+  -F "requester_email=alice@yourcompany.com" \
+  -F "counterparty_name=Bob Smith" \
+  -F "counterparty_email=bob@acme.com" \
+  -F "counterparty_organization_name=Acme Corp" \
+  -F "internal_signer_email=carol@yourcompany.com" \
+  -F 'variables={"purpose": "To agree on confidential terms", "duration_unit": "year", "duration": 2}'
+```
+
+The API resolves the internal signer by finding the workflow signer whose email matches `internal_signer_email`. If the param is omitted or the email doesn't match any workflow signer, the first signer by position is used as the default.
+
+Use the workflow schema's `fields_properties.internal_signer_email.properties.options` array to see the valid signer emails for a given workflow before creating a request.
+
 ## Request statuses
 
 Requests move through the following statuses:
